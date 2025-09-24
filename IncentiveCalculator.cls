@@ -17,7 +17,7 @@ public class IncentiveCalculator {
     }
 
     public static Decimal calculateMaxOI(Loan__c loan) {
-        // Initialize variables
+        // Initialize OI variables
         Decimal baseOI = 0;
         Decimal impactFactor = 0;
 
@@ -71,6 +71,7 @@ public class IncentiveCalculator {
             return 0; // Default to zero if no loan amount
         }
 
+        // Initialize FLC variables
         Decimal baseFactor = 0.04;
         Decimal factorIncrement = 0;
 
