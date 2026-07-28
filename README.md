@@ -130,3 +130,47 @@ Known gap: the `try/catch` around `JSON.deserialize(loan.Bonuses__c, ...)` — m
 - An admin-facing Lightning page to manage exceptions without navigating raw Setup UI
 - Bulkification/governor-limit review for the batch path at real production loan volumes (thousands of loans per run)
 - Effective-dated exceptions (a rate change that only applies going forward, preserving historical incentive calculations as-is)
+
+## 10. Demo scenario (walkthrough)
+ 
+A second, fresh loan against the existing `LEND001` exception lender, chosen because it produces a non-zero OI *and* a zero FLC in the same record — a stronger single demo than a run that just returns zero everywhere.
+ 
+**Loan__c**
+ 
+| Field | Value |
+|---|---|
+| Lender | Test Bank (LEND001) |
+| Loan Amount | `30000` |
+| Revenue | `1200000` |
+| Impact Points | `20` |
+| Borrower Status New | `Returning` |
+| Country New | `Kenya` |
+| Value Chain | `Coffee` |
+| Bonuses | `{"climate_smart":true}` |
+ 
+**Loan_Balance__c** (linked to the new loan)
+ 
+| Field | Value |
+|---|---|
+| Loan | (the new loan record) |
+| End of Month Balance | `15000` |
+| Month | today's date (must fall in the current quarter) |
+ 
+### Expected results — walk through this math live
+ 
+**Max_OI__c:**
+1. Loan amount `30000` ≥ LEND001's overridden minimum `20000` → passes threshold
+2. Revenue `1,200,000` ≥ `1,000,000` → `baseOI = 1,200,000 × 0.0015 = 1,800`
+3. Impact factor: `20 × 0.005 = 0.1`
+4. Bonus: `climate_smart = true` → `+2,000` → `baseOI = 3,800`
+5. Country multiplier: Kenya = `1.1` (LEND001 didn't override this, so the default map applies) → `3,800 × 1.1 = 4,180`
+6. Total: `4,180 + 0.1 = 4,180.10`
+**Max_FLC__c:**
+- LEND001 has `Eligible_For_FLC__c = false` → `0` regardless of loan amount
+**Quarterly_Earnings__c** (after running the batch):
+- Balance `15,000 × 0.06` (OI only, FLC excluded) = `900`
+### Why this scenario is a good live demo
+ 
+Unlike the first test (`Max_OI__c = 0` because revenue was too low), this one produces a non-zero OI alongside a zero FLC — so in one run it demonstrates both the bonus/multiplier math working *and* the eligibility gate blocking FLC in the same record.
+ 
+Run `IncentiveCalculator.calculateIncentives('<new loan Id>')` first, check `Max_OI__c = 4180.10` and `Max_FLC__c = 0`, then run the batch and check `Quarterly_Earnings__c = 900`.
