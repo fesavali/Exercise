@@ -30,6 +30,7 @@ Reviewing the original `IncentiveCalculator.cls` before making any changes:
 
 ## Flow diagram
 
+```text
 Loan Registered                     Quarter-end
 (New Loan__c)                  (Scheduled Batch)
       |                                 |
@@ -61,6 +62,8 @@ calculateIncentives()      QuarterlyIncentiveBatch.execute()
               | Incentive__c    |
               | Updated         |
               +-----------------+
+
+```text
 
 Both entry points registration and the quarter-end batch — funnel through the same getLenderConfig() call and the same eligibility gate before anything is computed. This is what structurally prevents the two flows from ever applying an exception differently.
 
