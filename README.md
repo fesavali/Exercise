@@ -28,27 +28,41 @@ Reviewing the original `IncentiveCalculator.cls` before making any changes:
 | 5 | `upsert incentive Loan__c;` does not compile | Standard Lookup fields cannot be marked as External ID in Salesforce — found while implementing, not visible from reading the code alone |
 | 6 | `calculateQuarterlyEarnings` sums *all* balances ever recorded for a loan | No date filtering — "quarterly" earnings would silently become "all-time" earnings once a loan has more than one quarter of balance history |
 
-Flow diagram
+## Flow diagram
 
-```mermaid
-flowchart TD
-    A[Loan registered<br/>New Loan__c record]
-    B[Quarter-end<br/>Scheduled batch run]
+Loan Registered                     Quarter-end
+(New Loan__c)                  (Scheduled Batch)
+      |                                 |
+      v                                 v
+calculateIncentives()      QuarterlyIncentiveBatch.execute()
+            \                     /
+             \                   /
+              +-----------------+
+              | getLenderConfig |
+              | Reads           |
+              | Lender_Exception|
+              | __mdt           |
+              +-----------------+
+                       |
+                       v
+              +-----------------+
+              | Eligibility Gate|
+              | OI/FLC enforced |
+              +-----------------+
+                       |
+                       v
+              +-----------------+
+              | Compute & Upsert|
+              | Incentive__c    |
+              +-----------------+
+                       |
+                       v
+              +-----------------+
+              | Incentive__c    |
+              | Updated         |
+              +-----------------+
 
-    A --> C[calculateIncentives()<br/>Registration flow]
-    B --> D[QuarterlyIncentiveBatch.execute()]
-
-    C --> E[getLenderConfig()<br/>Reads Lender_Exception__mdt]
-    D --> E
-
-    E --> F[Eligibility gate<br/>OI / FLC flags enforced]
-
-    F --> G[Compute & upsert<br/>Incentive__c record]
-
-    G --> H[Incentive__c updated<br/>OI, FLC, quarterly earnings]
-```
-
-Both entry points — registration and the quarter-end batch — funnel through the same getLenderConfig() call and the same eligibility gate before anything is computed. This is what structurally prevents the two flows from ever applying an exception differently.
+Both entry points registration and the quarter-end batch — funnel through the same getLenderConfig() call and the same eligibility gate before anything is computed. This is what structurally prevents the two flows from ever applying an exception differently.
 
 ## 3. Design
 
