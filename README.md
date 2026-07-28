@@ -127,8 +127,6 @@ Known gap: the `try/catch` around `JSON.deserialize(loan.Bonuses__c, ...)` — m
 
 ## 9. Possible extensions (open for discussion)
 
-- A third incentive type, or a generic/extensible incentive-type model instead of hardcoded OI/FLC fields
-- Per-country or per-value-chain *eligibility* (not just multipliers) — currently eligibility is lender-wide only
 - An admin-facing Lightning page to manage exceptions without navigating raw Setup UI
 - Bulkification/governor-limit review for the batch path at real production loan volumes (thousands of loans per run)
 - Effective-dated exceptions (a rate change that only applies going forward, preserving historical incentive calculations as-is)
